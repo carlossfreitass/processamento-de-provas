@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sisprova — Editor de Provas</title>
+  <title>Sisprova — Editor e Parsing</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 
   <!-- Quill.js -->
   <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
@@ -30,15 +30,16 @@
       --accent-hover: #818cf8;
       --accent-glow: rgba(99, 102, 241, .25);
       --success: #34d399;
+      --danger: #ef4444;
       --radius: 12px;
       --radius-sm: 8px;
       --transition: .2s cubic-bezier(.4,0,.2,1);
       --font: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'Fira Code', monospace;
     }
 
     /* Reset & Base */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: var(--font);
       background: var(--bg-body);
@@ -59,270 +60,246 @@
       border-bottom: 1px solid var(--border);
       background: linear-gradient(180deg, rgba(99,102,241,.06) 0%, transparent 100%);
     }
-
     .header-logo {
       width: 36px; height: 36px;
       background: linear-gradient(135deg, var(--accent), #a78bfa);
       border-radius: var(--radius-sm);
       display: grid; place-items: center;
       font-weight: 700; font-size: 16px; color: #fff;
-      flex-shrink: 0;
     }
-
     .header h1 {
-      font-size: 20px;
-      font-weight: 700;
+      font-size: 20px; font-weight: 700;
       background: linear-gradient(135deg, var(--text-primary), var(--accent-hover));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-
     .header .badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 10px;
-      border-radius: 20px;
-      background: rgba(99,102,241,.15);
-      color: var(--accent-hover);
-      letter-spacing: .5px;
-      text-transform: uppercase;
+      font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+      background: rgba(99,102,241,.15); color: var(--accent-hover); text-transform: uppercase;
     }
 
-    /* Main Container */
+    /* Main Layout */
     .container {
       width: 100%;
-      max-width: 900px;
+      max-width: 1400px;
       padding: 32px 24px 48px;
-      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    @media (max-width: 968px) {
+      .container { grid-template-columns: 1fr; }
     }
 
     .section-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size: 14px; font-weight: 600; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
     }
-
     .section-title::before {
-      content: '';
-      width: 3px; height: 16px;
-      background: var(--accent);
-      border-radius: 3px;
+      content: ''; width: 3px; height: 16px; background: var(--accent); border-radius: 3px;
     }
 
-    /* Instructions Card */
-    .instructions {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 22px;
-      margin-bottom: 28px;
-      line-height: 1.65;
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-
-    .instructions strong { color: var(--text-primary); }
-
-    .instructions code {
-      background: rgba(99,102,241,.12);
-      color: var(--accent-hover);
-      padding: 2px 7px;
-      border-radius: 4px;
-      font-size: 12.5px;
-      font-family: 'Fira Code', 'Consolas', monospace;
-    }
-
-    /* Editor Wrapper */
+    /* Left Column */
     .editor-wrapper {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
       transition: border-color var(--transition), box-shadow var(--transition);
+      margin-bottom: 20px;
     }
-
     .editor-wrapper:focus-within {
-      border-color: var(--border-focus);
-      box-shadow: 0 0 0 3px var(--accent-glow);
+      border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-glow);
     }
-
-    /* Quill Overrides */
-    .ql-toolbar.ql-snow {
-      border: none !important;
-      border-bottom: 1px solid var(--border) !important;
-      background: rgba(255,255,255,.02);
-      padding: 10px 14px !important;
-    }
-
+    .ql-toolbar.ql-snow { border: none !important; border-bottom: 1px solid var(--border) !important; background: rgba(255,255,255,.02); padding: 10px 14px !important; }
     .ql-toolbar .ql-stroke { stroke: var(--text-secondary) !important; }
-    .ql-toolbar .ql-fill   { fill: var(--text-secondary) !important; }
-    .ql-toolbar .ql-picker-label { color: var(--text-secondary) !important; }
-
-    .ql-toolbar button:hover .ql-stroke,
-    .ql-toolbar .ql-picker-label:hover { stroke: var(--accent-hover) !important; color: var(--accent-hover) !important; }
-
+    .ql-toolbar .ql-fill { fill: var(--text-secondary) !important; }
+    .ql-toolbar button:hover .ql-stroke { stroke: var(--accent-hover) !important; }
     .ql-toolbar button.ql-active .ql-stroke { stroke: var(--accent) !important; }
-    .ql-toolbar button.ql-active .ql-fill   { fill: var(--accent) !important; }
-
-    .ql-toolbar .ql-picker-options {
-      background: var(--bg-card) !important;
-      border: 1px solid var(--border) !important;
-      border-radius: var(--radius-sm) !important;
-      box-shadow: 0 8px 24px rgba(0,0,0,.4) !important;
-    }
-
-    .ql-toolbar .ql-picker-item { color: var(--text-secondary) !important; }
-    .ql-toolbar .ql-picker-item:hover { color: var(--accent-hover) !important; }
-
-    #editor-container {
-      background: var(--bg-editor);
-      min-height: 350px;
-      font-family: var(--font);
-    }
-
+    .ql-toolbar button.ql-active .ql-fill { fill: var(--accent) !important; }
+    #editor-container { background: var(--bg-editor); min-height: 450px; font-family: var(--font); }
     .ql-container.ql-snow { border: none !important; font-size: 15px; }
     .ql-editor { color: var(--text-primary); padding: 20px 24px; line-height: 1.75; }
-    .ql-editor.ql-blank::before { color: var(--text-muted) !important; font-style: normal !important; }
     .ql-editor img { max-width: 100%; border-radius: var(--radius-sm); margin: 8px 0; }
 
-    /* Actions Bar */
-    .actions {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 20px;
-      gap: 16px;
-    }
-
-    .char-count {
-      font-size: 13px;
-      color: var(--text-muted);
-      font-variant-numeric: tabular-nums;
-    }
+    .actions { display: flex; align-items: center; justify-content: space-between; }
+    .char-count { font-size: 13px; color: var(--text-muted); }
 
     .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 28px;
-      border: none;
-      border-radius: var(--radius-sm);
-      font-family: var(--font);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all var(--transition);
-      position: relative;
+      display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px;
+      border: none; border-radius: var(--radius-sm); font-family: var(--font);
+      font-size: 14px; font-weight: 600; cursor: pointer; transition: all var(--transition);
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff; box-shadow: 0 4px 14px var(--accent-glow); }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
+    .btn-primary:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+    .spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Right Column */
+    .results-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      min-height: 575px;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #7c3aed);
-      color: #fff;
-      box-shadow: 0 4px 14px var(--accent-glow);
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,.15);
+    }
+    .tab-btn {
+      flex: 1; padding: 14px; background: transparent; border: none;
+      color: var(--text-secondary); font-family: var(--font); font-size: 13px;
+      font-weight: 600; cursor: pointer; transition: var(--transition);
+      border-bottom: 2px solid transparent; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .tab-btn:hover { color: var(--text-primary); background: rgba(255,255,255,.03); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(99,102,241,.05); }
+
+    .tab-content { display: none; padding: 24px; flex: 1; overflow-y: auto; max-height: 600px; }
+    .tab-content.active { display: block; }
+
+    /* Empty state */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100%; color: var(--text-muted); text-align: center; padding: 40px;
+    }
+    .empty-state svg { width: 48px; height: 48px; opacity: 0.5; margin-bottom: 16px; stroke: var(--text-muted); }
+
+    /* Error state */
+    .error-alert {
+      background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5; padding: 16px; border-radius: var(--radius-sm); font-size: 14px; line-height: 1.5;
     }
 
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px var(--accent-glow);
+    /* JSON Format */
+    pre.json-view {
+      font-family: var(--font-mono); font-size: 13px; line-height: 1.5;
+      color: #a5b4fc; background: var(--bg-editor); padding: 16px;
+      border-radius: var(--radius-sm); overflow-x: auto;
     }
+    pre.json-view .key { color: #93c5fd; }
+    pre.json-view .string { color: #6ee7b7; }
+    pre.json-view .number { color: #fdba74; }
+    pre.json-view .boolean { color: #fca5a5; }
 
-    .btn-primary:active:not(:disabled) { transform: translateY(0); }
-
-    .btn-primary:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-      transform: none;
+    /* Visual Format */
+    .question-card {
+      background: var(--bg-editor); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 20px; margin-bottom: 20px;
     }
-
-    /* Spinner Icon */
-    .spinner {
-      width: 16px; height: 16px;
-      border: 2px solid rgba(255,255,255,.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin .6s linear infinite;
+    .question-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
     }
+    .question-num { font-weight: 700; color: var(--text-primary); font-size: 16px; }
+    .question-type {
+      font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .type-multipla { background: rgba(52, 211, 153, 0.15); color: var(--success); }
+    .type-discursiva { background: rgba(99, 102, 241, 0.15); color: var(--accent-hover); }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .enunciado-html { color: var(--text-primary); font-size: 15px; line-height: 1.6; margin-bottom: 16px; }
+    .enunciado-html img { max-width: 100%; border-radius: 4px; margin: 8px 0; }
+    .enunciado-html p { margin-bottom: 8px; }
 
-    /* Status Toast */
+    .alternativas-list { display: flex; flex-direction: column; gap: 8px; }
+    .alternativa-item {
+      display: flex; gap: 12px; padding: 12px; background: rgba(255,255,255,.02);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+    }
+    .alt-letter {
+      width: 24px; height: 24px; flex-shrink: 0; display: grid; place-items: center;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 4px; font-weight: 700; font-size: 13px; color: var(--accent);
+    }
+    .alt-html { font-size: 14.5px; color: var(--text-secondary); line-height: 1.6; }
+    .alt-html p { margin: 0; }
+    .alt-html img { max-width: 100%; border-radius: 4px; margin-top: 8px; }
+
+    /* ── Toast ── */
     .toast {
-      position: fixed;
-      bottom: 28px;
-      right: 28px;
-      padding: 14px 22px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 500;
-      color: #fff;
-      transform: translateY(100px);
-      opacity: 0;
-      transition: all .35s cubic-bezier(.34,1.56,.64,1);
-      z-index: 1000;
-      pointer-events: none;
+      position: fixed; bottom: 28px; right: 28px; padding: 14px 22px;
+      border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+      color: #fff; transform: translateY(100px); opacity: 0;
+      transition: all .35s cubic-bezier(.34,1.56,.64,1); z-index: 1000; pointer-events: none;
     }
-
     .toast.show { transform: translateY(0); opacity: 1; }
     .toast.success { background: linear-gradient(135deg, #059669, #34d399); }
     .toast.error   { background: linear-gradient(135deg, #dc2626, #f87171); }
-
-    /* Responsive */
-    @media (max-width: 640px) {
-      .container { padding: 20px 14px 36px; }
-      .header { padding: 16px; }
-      .actions { flex-direction: column-reverse; }
-      .btn { width: 100%; justify-content: center; }
-    }
   </style>
 </head>
 
 <body>
-  <!-- Header -->
   <header class="header">
     <div class="header-logo">S</div>
     <h1>Sisprova</h1>
-    <span class="badge">Fase 1</span>
+    <span class="badge">Fase 4</span>
   </header>
 
-  <!-- Main -->
   <main class="container">
-    <p class="section-title">Editor de prova</p>
-
-    <div class="instructions">
-      Cole o conteúdo da prova abaixo (aceita <strong>texto formatado</strong> e
-      <strong>imagens</strong> do Google Docs, Word ou screenshots).
-      Imagens coladas serão automaticamente convertidas para <code>Base64</code>
-      embutido no HTML.
+    <!-- Left Column: Input -->
+    <div class="col-input">
+      <p class="section-title">Editor de Prova (Entrada)</p>
+      
+      <div class="editor-wrapper">
+        <div id="editor-container"></div>
+      </div>
+      
+      <div class="actions">
+        <span class="char-count" id="char-count">0 caracteres</span>
+        <button class="btn btn-primary" id="btn-process" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+          Processar Prova
+        </button>
+      </div>
     </div>
 
-    <div class="editor-wrapper">
-      <div id="editor-container"></div>
-    </div>
+    <!-- Right Column: Results -->
+    <div class="col-results">
+      <p class="section-title">Pipeline de Parsing (Saída)</p>
 
-    <div class="actions">
-      <span class="char-count" id="char-count">0 caracteres</span>
-      <button class="btn btn-primary" id="btn-process" disabled>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
-        Processar Prova
-      </button>
+      <div class="results-card">
+        <div class="tabs">
+          <button class="tab-btn active" data-target="tab-visual">Prova Formatada</button>
+          <button class="tab-btn" data-target="tab-json">JSON Bruto</button>
+        </div>
+
+        <div class="tab-content active" id="tab-visual">
+          <div class="empty-state" id="empty-visual">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            <p>O resultado do parser aparecerá aqui.<br>Envie uma prova para iniciar.</p>
+          </div>
+          <div id="visual-render"></div>
+        </div>
+
+        <div class="tab-content" id="tab-json">
+          <div class="empty-state" id="empty-json">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            <p>Aguardando processamento...</p>
+          </div>
+          <pre class="json-view" id="json-render" style="display: none;"></pre>
+        </div>
+      </div>
     </div>
   </main>
 
-  <!-- Toast Notification -->
   <div class="toast" id="toast"></div>
 
   <script>
-    //  Quill Initialisation
+    //  Quill Initialisation & Image Handling
     const quill = new Quill('#editor-container', {
       theme: 'snow',
-      placeholder: 'Cole aqui o conteúdo da prova…',
+      placeholder: 'Cole a prova formatada aqui (Word, Google Docs, PDFs...)',
       modules: {
         toolbar: [
           [{ header: [1, 2, 3, false] }],
@@ -334,7 +311,6 @@
       },
     });
 
-    //  Character Counter
     const btnProcess = document.getElementById('btn-process');
     const charCount  = document.getElementById('char-count');
 
@@ -344,34 +320,30 @@
       btnProcess.disabled = len === 0;
     });
 
-    //  Paste Handler
+    // Base64 Paste Interception
     function blobToBase64(blob) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload  = () => resolve(reader.result);
+        reader.onload = () => resolve(reader.result);
         reader.onerror = reject;
         reader.readAsDataURL(blob);
       });
     }
 
     async function inlineImagesAsBase64(html) {
-      const parser  = new DOMParser();
-      const doc     = parser.parseFromString(html, 'text/html');
-      const images  = doc.querySelectorAll('img[src]');
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const images = doc.querySelectorAll('img[src]');
 
       await Promise.all([...images].map(async (img) => {
         const src = img.getAttribute('src');
-        if (src.startsWith('data:')) return; // already Base64
-
+        if (src.startsWith('data:')) return;
         try {
           const resp = await fetch(src);
           const blob = await resp.blob();
           img.setAttribute('src', await blobToBase64(blob));
-        } catch {
-          img.remove();
-        }
+        } catch { img.remove(); }
       }));
-
       return doc.body.innerHTML;
     }
 
@@ -379,7 +351,7 @@
       for (const file of files) {
         if (!file.type.startsWith('image/')) continue;
         const dataUri = await blobToBase64(file);
-        const range   = quill.getSelection(true);
+        const range = quill.getSelection(true);
         quill.insertEmbed(range.index, 'image', dataUri, Quill.sources.USER);
         quill.setSelection(range.index + 1, Quill.sources.SILENT);
       }
@@ -396,58 +368,117 @@
         return;
       }
 
-      // Rich HTML
       const html = clipboardData.getData('text/html');
       if (html && /<img\s/i.test(html)) {
         e.preventDefault();
-
         const cleanHtml = await inlineImagesAsBase64(html);
-        const range     = quill.getSelection(true);
-
+        const range = quill.getSelection(true);
         quill.clipboard.dangerouslyPasteHTML(range.index, cleanHtml, Quill.sources.USER);
       }
     });
 
-    //  Post-insert Cleanup
-    const observer = new MutationObserver((mutations) => {
-      for (const m of mutations) {
-        for (const node of m.addedNodes) {
-          if (node.nodeType !== Node.ELEMENT_NODE) continue;
-          const imgs = node.tagName === 'IMG' ? [node] : node.querySelectorAll?.('img') || [];
-          for (const img of imgs) {
-            const src = img.getAttribute('src') || '';
-            if (src && !src.startsWith('data:')) {
-              fetch(src)
-                .then(r => r.blob())
-                .then(b => blobToBase64(b))
-                .then(uri => img.setAttribute('src', uri))
-                .catch(() => img.remove());
-            }
-          }
-        }
-      }
-    });
-    observer.observe(quill.root, { childList: true, subtree: true });
-
-    //  Toast Helper
+    //  UI Helpers
     const toastEl = document.getElementById('toast');
     let toastTimer = null;
-
     function showToast(msg, type = 'success', duration = 3500) {
       clearTimeout(toastTimer);
       toastEl.textContent = msg;
-      toastEl.className   = `toast ${type} show`;
-      toastTimer = setTimeout(() => { toastEl.classList.remove('show'); }, duration);
+      toastEl.className = `toast ${type} show`;
+      toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
     }
 
-    //  "Processar Prova" — POST /input
+    // Tabs logic
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.target).classList.add('active');
+      });
+    });
+
+    // JSON syntax highlighting
+    function syntaxHighlight(json) {
+      if (typeof json != 'string') json = JSON.stringify(json, undefined, 2);
+      json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        let cls = 'number';
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) { cls = 'key'; } else { cls = 'string'; }
+        } else if (/true|false/.test(match)) { cls = 'boolean'; }
+        return '<span class="' + cls + '">' + match + '</span>';
+      });
+    }
+
+    //  Processamento & Renderização
+    const visualRender = document.getElementById('visual-render');
+    const jsonRender = document.getElementById('json-render');
+
+    function renderError(msg) {
+      document.getElementById('empty-visual').style.display = 'none';
+      document.getElementById('empty-json').style.display = 'none';
+      jsonRender.style.display = 'none';
+      
+      visualRender.innerHTML = `<div class="error-alert"><strong>Erro no processamento:</strong><br>${msg}</div>`;
+      showToast('Ocorreu um erro no pipeline.', 'error');
+    }
+
+    function renderResult(data) {
+      // Esconde empty states
+      document.getElementById('empty-visual').style.display = 'none';
+      document.getElementById('empty-json').style.display = 'none';
+      
+      // Renderiza JSON
+      jsonRender.style.display = 'block';
+      jsonRender.innerHTML = syntaxHighlight(data);
+
+      // Renderiza HTML formatado
+      visualRender.innerHTML = '';
+      if (!data.questoes || data.questoes.length === 0) {
+        visualRender.innerHTML = '<div class="empty-state"><p>Nenhuma questão identificada.</p></div>';
+        return;
+      }
+
+      data.questoes.forEach((q, idx) => {
+        const num = q.numero || (idx + 1);
+        const badgeClass = q.tipo === 'multipla_escolha' ? 'type-multipla' : 'type-discursiva';
+        const typeLabel = q.tipo === 'multipla_escolha' ? 'Múltipla Escolha' : 'Discursiva';
+
+        let altsHtml = '';
+        if (q.alternativas && q.alternativas.length > 0) {
+          altsHtml = '<div class="alternativas-list">';
+          q.alternativas.forEach(alt => {
+            altsHtml += `
+              <div class="alternativa-item">
+                <div class="alt-letter">${alt.letra}</div>
+                <div class="alt-html">${alt.texto}</div>
+              </div>
+            `;
+          });
+          altsHtml += '</div>';
+        }
+
+        visualRender.innerHTML += `
+          <div class="question-card">
+            <div class="question-header">
+              <span class="question-num">Questão ${num}</span>
+              <span class="question-type ${badgeClass}">${typeLabel}</span>
+            </div>
+            <div class="enunciado-html">${q.enunciado}</div>
+            ${altsHtml}
+          </div>
+        `;
+      });
+
+      showToast(`Sucesso! ${data.total_questoes} questões processadas.`);
+    }
+
     btnProcess.addEventListener('click', async () => {
       const htmlContent = quill.root.innerHTML;
 
-      // Enter Loading State
-      btnProcess.disabled   = true;
-      const originalLabel   = btnProcess.innerHTML;
-      btnProcess.innerHTML  = '<span class="spinner"></span> Processando…';
+      btnProcess.disabled = true;
+      const originalLabel = btnProcess.innerHTML;
+      btnProcess.innerHTML = '<span class="spinner"></span> Processando…';
 
       try {
         const resp = await fetch('/input', {
@@ -457,14 +488,19 @@
         });
 
         const data = await resp.json();
-        console.log('[Sisprova] Resposta do /input:', data);
-        showToast('Prova enviada com sucesso!', 'success');
+        
+        if (!resp.ok) {
+          throw new Error(data.error || 'Erro desconhecido retornado pelo servidor.');
+        }
+
+        renderResult(data);
+        
       } catch (err) {
-        console.error('[Sisprova] Erro ao enviar:', err);
-        showToast('Erro ao enviar — veja o console.', 'error');
+        console.error('[Sisprova] Erro:', err);
+        renderError(err.message);
       } finally {
         btnProcess.innerHTML = originalLabel;
-        btnProcess.disabled  = quill.getText().trim().length === 0;
+        btnProcess.disabled = quill.getText().trim().length === 0;
       }
     });
   </script>
