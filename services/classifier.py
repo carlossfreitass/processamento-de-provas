@@ -4,6 +4,7 @@ Módulo de classificação — divide o HTML em questões e classifica via Máqu
 
 import re
 from bs4 import BeautifulSoup
+from services.ai_classifier import classify_with_ai
 
 def split_into_blocks(sanitized_html: str) -> list[str]:
     """
@@ -32,7 +33,6 @@ def split_into_blocks(sanitized_html: str) -> list[str]:
     # Trata caso onde há texto antes da primeira questão
     first_match_start = matches[0].start()
     if first_match_start > 0:
-        intro = sanitized_html[0:first_match_start].strip()
         pass
 
     for i in range(len(matches)):
@@ -45,6 +45,7 @@ def split_into_blocks(sanitized_html: str) -> list[str]:
 def classify_question(block: str) -> dict:
     """
     FSM que classifica o bloco em 'multipla_escolha' ou 'discursiva' e extrai alternativas.
+    Usa a API da Groq como segunda camada de validação.
     """
     # Extrair o número da questão do bloco
     numero = 0
@@ -128,9 +129,26 @@ def classify_question(block: str) -> dict:
 
     tipo = "multipla_escolha" if len(alternativas) > 0 else "discursiva"
 
+    # Camada de Validação
+    if tipo == "multipla_escolha":
+        ai_decision = classify_with_ai(block)
+        if ai_decision == "DISCURSIVA":
+            tipo = "discursiva"
+
+            # Reconstrói o enunciado devolvendo todo o conteúdo das alternativas
+            for alt in alternativas:
+                enunciado_html.append(alt["texto"])
+
+            alternativas = []
+            enunciado_html_final = "".join(enunciado_html).strip()
+        else:
+            enunciado_html_final = "".join(enunciado_html).strip()
+    else:
+        enunciado_html_final = "".join(enunciado_html).strip()
+
     return {
         "numero": numero,
         "tipo": tipo,
-        "enunciado": "".join(enunciado_html).strip(),
+        "enunciado": enunciado_html_final,
         "alternativas": alternativas
     }
