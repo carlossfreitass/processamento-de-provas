@@ -22,9 +22,11 @@ def create_app():
     # Blueprints
     from app_routes.health import health_bp
     from app_routes.input import input_bp
+    from app_routes.pages import pages_bp
 
     app.register_blueprint(health_bp)
     app.register_blueprint(input_bp)
+    app.register_blueprint(pages_bp)
 
     return app
 

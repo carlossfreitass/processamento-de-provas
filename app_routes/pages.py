@@ -1,0 +1,12 @@
+"""
+Blueprint de páginas.
+"""
+
+from flask import Blueprint, render_template
+
+pages_bp = Blueprint("pages", __name__)
+
+@pages_bp.route("/", methods=["GET"])
+def index():
+    """Página principal."""
+    return render_template("index.html")

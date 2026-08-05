@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sisprova — Editor de Provas</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Quill.js -->
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+
+  <style>
+    /* Design Tokens */
+    :root {
+      --bg-body: #0f1117;
+      --bg-card: #1a1d27;
+      --bg-card-hover: #1e2230;
+      --bg-editor: #14161e;
+      --border: #2a2e3d;
+      --border-focus: #6366f1;
+      --text-primary: #e8eaed;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --accent-glow: rgba(99, 102, 241, .25);
+      --success: #34d399;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --transition: .2s cubic-bezier(.4,0,.2,1);
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    /* Reset & Base */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg-body);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Header */
+    .header {
+      width: 100%;
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(99,102,241,.06) 0%, transparent 100%);
+    }
+
+    .header-logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      border-radius: var(--radius-sm);
+      display: grid; place-items: center;
+      font-weight: 700; font-size: 16px; color: #fff;
+      flex-shrink: 0;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--text-primary), var(--accent-hover));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(99,102,241,.15);
+      color: var(--accent-hover);
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    /* Main Container */
+    .container {
+      width: 100%;
+      max-width: 900px;
+      padding: 32px 24px 48px;
+      flex: 1;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 3px; height: 16px;
+      background: var(--accent);
+      border-radius: 3px;
+    }
+
+    /* Instructions Card */
+    .instructions {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      margin-bottom: 28px;
+      line-height: 1.65;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .instructions strong { color: var(--text-primary); }
+
+    .instructions code {
+      background: rgba(99,102,241,.12);
+      color: var(--accent-hover);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 12.5px;
+      font-family: 'Fira Code', 'Consolas', monospace;
+    }
+
+    /* Editor Wrapper */
+    .editor-wrapper {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .editor-wrapper:focus-within {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    /* Quill Overrides */
+    .ql-toolbar.ql-snow {
+      border: none !important;
+      border-bottom: 1px solid var(--border) !important;
+      background: rgba(255,255,255,.02);
+      padding: 10px 14px !important;
+    }
+
+    .ql-toolbar .ql-stroke { stroke: var(--text-secondary) !important; }
+    .ql-toolbar .ql-fill   { fill: var(--text-secondary) !important; }
+    .ql-toolbar .ql-picker-label { color: var(--text-secondary) !important; }
+
+    .ql-toolbar button:hover .ql-stroke,
+    .ql-toolbar .ql-picker-label:hover { stroke: var(--accent-hover) !important; color: var(--accent-hover) !important; }
+
+    .ql-toolbar button.ql-active .ql-stroke { stroke: var(--accent) !important; }
+    .ql-toolbar button.ql-active .ql-fill   { fill: var(--accent) !important; }
+
+    .ql-toolbar .ql-picker-options {
+      background: var(--bg-card) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: var(--radius-sm) !important;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4) !important;
+    }
+
+    .ql-toolbar .ql-picker-item { color: var(--text-secondary) !important; }
+    .ql-toolbar .ql-picker-item:hover { color: var(--accent-hover) !important; }
+
+    #editor-container {
+      background: var(--bg-editor);
+      min-height: 350px;
+      font-family: var(--font);
+    }
+
+    .ql-container.ql-snow { border: none !important; font-size: 15px; }
+    .ql-editor { color: var(--text-primary); padding: 20px 24px; line-height: 1.75; }
+    .ql-editor.ql-blank::before { color: var(--text-muted) !important; font-style: normal !important; }
+    .ql-editor img { max-width: 100%; border-radius: var(--radius-sm); margin: 8px 0; }
+
+    /* Actions Bar */
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 20px;
+      gap: 16px;
+    }
+
+    .char-count {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: #fff;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    .btn-primary:active:not(:disabled) { transform: translateY(0); }
+
+    .btn-primary:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Spinner Icon */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Status Toast */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      padding: 14px 22px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all .35s cubic-bezier(.34,1.56,.64,1);
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { background: linear-gradient(135deg, #059669, #34d399); }
+    .toast.error   { background: linear-gradient(135deg, #dc2626, #f87171); }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .container { padding: 20px 14px 36px; }
+      .header { padding: 16px; }
+      .actions { flex-direction: column-reverse; }
+      .btn { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo">S</div>
+    <h1>Sisprova</h1>
+    <span class="badge">Fase 1</span>
+  </header>
+
+  <!-- Main -->
+  <main class="container">
+    <p class="section-title">Editor de prova</p>
+
+    <div class="instructions">
+      Cole o conteúdo da prova abaixo (aceita <strong>texto formatado</strong> e
+      <strong>imagens</strong> do Google Docs, Word ou screenshots).
+      Imagens coladas serão automaticamente convertidas para <code>Base64</code>
+      embutido no HTML.
+    </div>
+
+    <div class="editor-wrapper">
+      <div id="editor-container"></div>
+    </div>
+
+    <div class="actions">
+      <span class="char-count" id="char-count">0 caracteres</span>
+      <button class="btn btn-primary" id="btn-process" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+        Processar Prova
+      </button>
+    </div>
+  </main>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    //  Quill Initialisation
+    const quill = new Quill('#editor-container', {
+      theme: 'snow',
+      placeholder: 'Cole aqui o conteúdo da prova…',
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['blockquote'],
+          ['clean'],
+        ],
+      },
+    });
+
+    //  Character Counter
+    const btnProcess = document.getElementById('btn-process');
+    const charCount  = document.getElementById('char-count');
+
+    quill.on('text-change', () => {
+      const len = quill.getText().trim().length;
+      charCount.textContent = `${len.toLocaleString('pt-BR')} caractere${len !== 1 ? 's' : ''}`;
+      btnProcess.disabled = len === 0;
+    });
+
+    //  Paste Handler
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function inlineImagesAsBase64(html) {
+      const parser  = new DOMParser();
+      const doc     = parser.parseFromString(html, 'text/html');
+      const images  = doc.querySelectorAll('img[src]');
+
+      await Promise.all([...images].map(async (img) => {
+        const src = img.getAttribute('src');
+        if (src.startsWith('data:')) return; // already Base64
+
+        try {
+          const resp = await fetch(src);
+          const blob = await resp.blob();
+          img.setAttribute('src', await blobToBase64(blob));
+        } catch {
+          img.remove();
+        }
+      }));
+
+      return doc.body.innerHTML;
+    }
+
+    async function handleClipboardFiles(files) {
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+        const dataUri = await blobToBase64(file);
+        const range   = quill.getSelection(true);
+        quill.insertEmbed(range.index, 'image', dataUri, Quill.sources.USER);
+        quill.setSelection(range.index + 1, Quill.sources.SILENT);
+      }
+    }
+
+    quill.root.addEventListener('paste', async (e) => {
+      const clipboardData = e.clipboardData || window.clipboardData;
+      if (!clipboardData) return;
+
+      const imageFiles = [...clipboardData.files].filter(f => f.type.startsWith('image/'));
+      if (imageFiles.length > 0) {
+        e.preventDefault();
+        await handleClipboardFiles(imageFiles);
+        return;
+      }
+
+      // Rich HTML
+      const html = clipboardData.getData('text/html');
+      if (html && /<img\s/i.test(html)) {
+        e.preventDefault();
+
+        const cleanHtml = await inlineImagesAsBase64(html);
+        const range     = quill.getSelection(true);
+
+        quill.clipboard.dangerouslyPasteHTML(range.index, cleanHtml, Quill.sources.USER);
+      }
+    });
+
+    //  Post-insert Cleanup
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        for (const node of m.addedNodes) {
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+          const imgs = node.tagName === 'IMG' ? [node] : node.querySelectorAll?.('img') || [];
+          for (const img of imgs) {
+            const src = img.getAttribute('src') || '';
+            if (src && !src.startsWith('data:')) {
+              fetch(src)
+                .then(r => r.blob())
+                .then(b => blobToBase64(b))
+                .then(uri => img.setAttribute('src', uri))
+                .catch(() => img.remove());
+            }
+          }
+        }
+      }
+    });
+    observer.observe(quill.root, { childList: true, subtree: true });
+
+    //  Toast Helper
+    const toastEl = document.getElementById('toast');
+    let toastTimer = null;
+
+    function showToast(msg, type = 'success', duration = 3500) {
+      clearTimeout(toastTimer);
+      toastEl.textContent = msg;
+      toastEl.className   = `toast ${type} show`;
+      toastTimer = setTimeout(() => { toastEl.classList.remove('show'); }, duration);
+    }
+
+    //  "Processar Prova" — POST /input
+    btnProcess.addEventListener('click', async () => {
+      const htmlContent = quill.root.innerHTML;
+
+      // Enter Loading State
+      btnProcess.disabled   = true;
+      const originalLabel   = btnProcess.innerHTML;
+      btnProcess.innerHTML  = '<span class="spinner"></span> Processando…';
+
+      try {
+        const resp = await fetch('/input', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ html: htmlContent }),
+        });
+
+        const data = await resp.json();
+        console.log('[Sisprova] Resposta do /input:', data);
+        showToast('Prova enviada com sucesso!', 'success');
+      } catch (err) {
+        console.error('[Sisprova] Erro ao enviar:', err);
+        showToast('Erro ao enviar — veja o console.', 'error');
+      } finally {
+        btnProcess.innerHTML = originalLabel;
+        btnProcess.disabled  = quill.getText().trim().length === 0;
+      }
+    });
+  </script>
+</body>
+</html>
