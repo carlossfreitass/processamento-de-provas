@@ -364,6 +364,7 @@
       const imageFiles = [...clipboardData.files].filter(f => f.type.startsWith('image/'));
       if (imageFiles.length > 0) {
         e.preventDefault();
+        e.stopPropagation();
         await handleClipboardFiles(imageFiles);
         return;
       }
@@ -371,11 +372,12 @@
       const html = clipboardData.getData('text/html');
       if (html && /<img\s/i.test(html)) {
         e.preventDefault();
+        e.stopPropagation();
         const cleanHtml = await inlineImagesAsBase64(html);
         const range = quill.getSelection(true);
         quill.clipboard.dangerouslyPasteHTML(range.index, cleanHtml, Quill.sources.USER);
       }
-    });
+    }, { capture: true });
 
     //  UI Helpers
     const toastEl = document.getElementById('toast');
