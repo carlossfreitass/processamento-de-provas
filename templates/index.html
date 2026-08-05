@@ -100,9 +100,10 @@
       content: ''; width: 3px; height: 16px; background: var(--accent); border-radius: 3px;
     }
 
-    /* Left Column */
+    /* ── Left Column (Editor) ── */
     .editor-wrapper {
-      background: var(--bg-card); border: 1px solid var(--border);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: var(--radius); overflow: hidden;
       transition: border-color var(--transition), box-shadow var(--transition);
       margin-bottom: 20px;
@@ -110,15 +111,17 @@
     .editor-wrapper:focus-within {
       border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-glow);
     }
-    .ql-toolbar.ql-snow { border: none !important; border-bottom: 1px solid var(--border) !important; background: rgba(255,255,255,.02); padding: 10px 14px !important; }
+    .ql-toolbar.ql-snow { border: none !important; border-bottom: 1px solid var(--border) !important; background: rgba(0,0,0,0.15) !important; padding: 10px 14px !important; }
     .ql-toolbar .ql-stroke { stroke: var(--text-secondary) !important; }
     .ql-toolbar .ql-fill { fill: var(--text-secondary) !important; }
     .ql-toolbar button:hover .ql-stroke { stroke: var(--accent-hover) !important; }
     .ql-toolbar button.ql-active .ql-stroke { stroke: var(--accent) !important; }
     .ql-toolbar button.ql-active .ql-fill { fill: var(--accent) !important; }
-    #editor-container { background: var(--bg-editor); min-height: 450px; font-family: var(--font); }
+    
+    #editor-container { background: #1A1D27 !important; min-height: 450px; font-family: var(--font); }
     .ql-container.ql-snow { border: none !important; font-size: 15px; }
-    .ql-editor { color: var(--text-primary); padding: 20px 24px; line-height: 1.75; }
+    .ql-editor { color: #f1f5f9 !important; padding: 20px 24px; line-height: 1.75; }
+    .ql-editor.ql-blank::before { color: #94a3b8 !important; font-style: normal !important; }
     .ql-editor img { max-width: 100%; border-radius: var(--radius-sm); margin: 8px 0; }
 
     .actions { display: flex; align-items: center; justify-content: space-between; }
