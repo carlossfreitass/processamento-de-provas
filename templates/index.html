@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sisprova — Editor e Parsing</title>
+  <title>Processamento de Provas</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -247,9 +247,8 @@
 
 <body>
   <header class="header">
-    <div class="header-logo">S</div>
-    <h1>Sisprova</h1>
-    <span class="badge">Fase 4</span>
+    <div class="header-logo">P</div>
+    <h1>Processamento de Provas</h1>
   </header>
 
   <main class="container">
@@ -524,7 +523,7 @@
         renderResult(data);
         
       } catch (err) {
-        console.error('[Sisprova] Erro:', err);
+        console.error('[Processamento de Provas] Erro:', err);
         renderError(err.message);
       } finally {
         btnProcess.innerHTML = originalLabel;
