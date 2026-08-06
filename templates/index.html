@@ -185,14 +185,17 @@
 
     /* JSON Format */
     pre.json-view {
-      font-family: var(--font-mono); font-size: 13px; line-height: 1.5;
+      font-family: var(--font-mono); font-size: 12px; line-height: 1.5;
       color: #a5b4fc; background: var(--bg-editor); padding: 16px;
-      border-radius: var(--radius-sm); overflow-x: auto;
+      border-radius: var(--radius-sm);
+      max-height: 32rem; overflow-y: auto; overflow-x: auto;
+      white-space: pre-wrap; word-break: break-word;
     }
     pre.json-view .key { color: #93c5fd; }
     pre.json-view .string { color: #6ee7b7; }
     pre.json-view .number { color: #fdba74; }
     pre.json-view .boolean { color: #fca5a5; }
+    pre.json-view .truncated { color: #fbbf24; font-style: italic; }
 
     /* Visual Format */
     .question-card {
@@ -402,6 +405,25 @@
       });
     });
 
+    // Trunca strings Base64 longas para exibição segura
+    function truncateBase64ForDisplay(obj) {
+      if (typeof obj === 'string') {
+        return obj.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+\/=]{80,}/g, function(match) {
+          const sizeKB = Math.round((match.length * 3) / 4 / 1024);
+          return match.substring(0, 40) + '... [TRUNCADO - ' + sizeKB + 'KB]';
+        });
+      }
+      if (Array.isArray(obj)) return obj.map(truncateBase64ForDisplay);
+      if (obj && typeof obj === 'object') {
+        const copy = {};
+        for (const key of Object.keys(obj)) {
+          copy[key] = truncateBase64ForDisplay(obj[key]);
+        }
+        return copy;
+      }
+      return obj;
+    }
+
     // JSON syntax highlighting
     function syntaxHighlight(json) {
       if (typeof json != 'string') json = JSON.stringify(json, undefined, 2);
@@ -435,7 +457,8 @@
       
       // Renderiza JSON
       jsonRender.style.display = 'block';
-      jsonRender.innerHTML = syntaxHighlight(data);
+      const safeData = truncateBase64ForDisplay(data);
+      jsonRender.innerHTML = syntaxHighlight(safeData);
 
       // Renderiza HTML formatado
       visualRender.innerHTML = '';
