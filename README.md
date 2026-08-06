@@ -138,7 +138,7 @@ processamento-de-provas/
 **1. Clone o repositório**
 
 ```bash
-git clone https://github.com/seu-usuario/processamento-de-provas.git
+git clone https://github.com/carlossfreitass/processamento-de-provas.git
 cd processamento-de-provas
 ```
 
