@@ -109,15 +109,15 @@ processamento-de-provas/
 │   └── pages.py             # GET / — serve a interface web (index.html)
 │
 ├── services/                # Camada de negócio e integração com IA
-│   ├── sanitizer.py         # Fase 2: Limpeza de HTML e tokenização de imagens
-│   ├── classifier.py        # Fase 3: FSM de divisão e classificação de questões
-│   ├── ai_classifier.py     # Fase 3b: Validação por IA via API Groq (com cache e fallback)
-│   └── parser.py            # Orquestrador do pipeline completo (Fases 1→5)
+│   ├── sanitizer.py         # Limpeza de HTML e tokenização de imagens
+│   ├── classifier.py        # FSM de divisão e classificação de questões
+│   ├── ai_classifier.py     # Validação por IA via API Groq (com cache e fallback)
+│   └── parser.py            # Orquestrador do pipeline completo
 │
 ├── templates/
 │   └── index.html           # Interface web completa: editor Quill + painel de resultados
 │
-├── .env                     # Variáveis de ambiente locais (não comitar — ver .gitignore)
+├── .env                     # Variáveis de ambiente locais
 ├── .env.example             # Template de variáveis de ambiente
 ├── requirements.txt         # Dependências Python do projeto
 └── .gitignore
